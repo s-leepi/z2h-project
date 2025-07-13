@@ -14,6 +14,7 @@ struct employee_t {
 	char name[256];
 	char address[256];
 	unsigned int hours;
+
 };
 
 int create_db_header(int fd, struct dbheader_t **headerOut);
