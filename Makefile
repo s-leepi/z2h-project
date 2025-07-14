@@ -3,8 +3,16 @@ SRC = $(wildcard src/*.c)
 OBJ = $(patsubst src/%.c, obj/%.o, $(SRC))
 
 run: clean default
-	./$(TARGET) -n -f ./mydb.db
-	./$(TARGET) -f ./mydb.db -a "NKP,LE5,200"
+	./$(TARGET) -n -f ./final.db
+	./$(TARGET) -f ./final.db -a "Waytoodank,LE1,200"
+	./$(TARGET) -f ./final.db -a "Kappa,LE1,200"
+	./$(TARGET) -f ./final.db -a "Pepega,LE1,200"
+	./$(TARGET) -f ./final.db -a "Poggers,LE1,200"
+	./$(TARGET) -f ./final.db -a "Sadge,LE1,200"
+	./$(TARGET) -f ./final.db -a "Smile,LE1,200"
+	./$(TARGET) -f ./final.db -a "cmonBruh,LE1,200"
+	./$(TARGET) -f ./final.db -a "Trihard7,LE1,200"
+
 
 default: $(TARGET)
 
@@ -14,7 +22,7 @@ clean:
 	rm -f *.db
 
 $(TARGET): $(OBJ)
-	gcc -o $@ $?
+	gcc -o $@ $? -g
 
 obj/%.o : src/%.c
 	gcc -c $< -o $@ -Iinclude

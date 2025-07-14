@@ -10,24 +10,71 @@
 #include "common.h"
 #include "parse.h"
 
-void list_employees(struct dbheader_t *dbhdr, struct employee_t *employees) {
+void add_hours(struct dbheader_t *dbhdr, struct employee_t **employees, char *hoursstring) {
+	char *name = strtok(hoursstring, ",");
+	char *hours = strtok(NULL, ",");
 
+	printf("Name: %s\nHours: %s\n", name, hours);
+
+	int i = 0;
+	for (; i < dbhdr->count; i++) {
+		if (!strcmp(name, (*employees)[i].name)) {
+			(*employees)[i].hours += atoi(hours);
+		}
+	}
+}
+
+int remove_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *remove){
+	int read_idx = 0;
+	int write_idx = 0;
+	int count = dbhdr->count;
+
+	for(; read_idx	< dbhdr->count; read_idx++) {
+		if (!strcmp(remove, (*employees)[read_idx].name)) {
+			count--;
+		} else {
+			if (write_idx != read_idx) {
+				(*employees)[write_idx] = (*employees)[read_idx];
+			}
+
+			write_idx++;
+		}
+	}
+	
+	dbhdr->count = count;
+	
+	struct employee_t *temp = realloc(*employees, dbhdr->count*sizeof(struct employee_t));
+	if (temp == NULL) {
+		printf("Realloc failed\n");
+		return STATUS_ERROR;
+	}
+
+	*employees = temp;
+
+	return STATUS_SUCCESS;
+}
+
+void list_employees(struct dbheader_t *dbhdr, struct employee_t *employees) {
+	int i = 0;
+	for(; i < dbhdr->count; i++) {
+		printf("Employee %d\n", i+1);
+		printf("\tName: %s\n", employees[i].name);
+		printf("\tAddress: %s\n", employees[i].address);
+		printf("\tHours: %d\n", employees[i].hours);
+	}
 }
 
 int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *addstring) {
-	printf("%s\n", addstring);
-
 	char *name = strtok(addstring, ",");
 	char *addr = strtok(NULL, ",");
 	char *hours = strtok(NULL, ",");
-
-	printf("%s %s %s\n", name, addr, hours);
-
-	strncpy(employees[dbhdr->count - 1].name, name, sizeof(employees[dbhdr->count - 1].name));
-
-	strncpy(employees[dbhdr->count - 1].address, addr, sizeof(employees[dbhdr->count - 1].address));
 	
-	employees[dbhdr->count - 1].hours = atoi(hours);
+	int i = dbhdr->count - 1;
+	
+
+	strncpy(employees[i].name, name, sizeof(employees[i].name) - 1);
+	strncpy(employees[i].address, addr, sizeof(employees[i].address) - 1);
+	employees[i].hours = atoi(hours);
 
 	return STATUS_SUCCESS;
 }
@@ -41,7 +88,7 @@ int read_employees(int fd, struct dbheader_t *dbhdr, struct employee_t **employe
 	int count = dbhdr->count;
 
 	struct employee_t *employees = calloc(count, sizeof(struct employee_t));
-	if (employees == -1) {
+	if (employees == NULL) {
 		printf("Malloc failed to create employees\n");
 		return STATUS_ERROR;
 	}
@@ -82,6 +129,7 @@ int output_file(int fd, struct dbheader_t *dbhdr, struct employee_t *employees) 
 	}
 
 	
+	ftruncate(fd, sizeof(struct dbheader_t) + (sizeof(struct employee_t) * realcount));
 
 	return STATUS_SUCCESS;
 
@@ -94,7 +142,7 @@ int validate_db_header(int fd, struct dbheader_t **headerOut) {
 	}
 
 	struct dbheader_t *header = calloc(1, sizeof(struct dbheader_t));
-	if (header == -1) {
+	if (header == NULL) {
 		printf("Malloc failed to create db header\n");
 		return STATUS_ERROR;
 	}
@@ -138,7 +186,7 @@ int validate_db_header(int fd, struct dbheader_t **headerOut) {
 
 int create_db_header(int fd, struct dbheader_t **headerOut) {
 	struct dbheader_t *header = calloc(1, sizeof(struct dbheader_t));
-	if (header == -1) {
+	if (header == NULL) {
 		printf("Malloc failed to create db header\n");
 		return STATUS_ERROR;
 	}

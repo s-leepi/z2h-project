@@ -3,6 +3,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "common.h"
 #include "file.h"
@@ -18,13 +19,19 @@ int main(int argc, char *argv[]) {
 	
 	char *filepath = NULL;
 	char *addstring = NULL;
+	char *remove = NULL;
+	char *hoursstring = NULL;
+
 	bool newfile = false;
+	bool list = false;
+	
 	int c = 0;
 	int dbfd = -1;
+	
 	struct dbheader_t *header = NULL;
 	struct employee_t *employees = NULL;
 
-	while((c = getopt(argc, argv, "nf:a:")) != -1) {
+	while((c = getopt(argc, argv, "nf:a:lr:h:")) != -1) {
 		switch (c) {
 		
 			case 'n':
@@ -35,6 +42,15 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'a':
 				addstring = optarg;
+				break;
+			case 'l':
+				list = true;
+				break;
+			case 'r':
+				remove = optarg;
+				break;
+			case 'h':
+				hoursstring = optarg;
 				break;
 			case '?':
 				printf("Unknown option -%c\n", c);
@@ -78,16 +94,37 @@ int main(int argc, char *argv[]) {
 	if (read_employees(dbfd, header, &employees) == STATUS_ERROR) {
 		printf("Failed to read employees\n");
 		return -1;
-	}
 
+	}
+	
+	
 	if (addstring) {
 		header->count++;
 		employees = realloc(employees, header->count*(sizeof(struct employee_t)));
+		int i = header->count - 1;
+		memset(&employees[i], 0, sizeof(struct employee_t)); 
 		add_employee(header, employees, addstring);
 	}
 
-	output_file(dbfd, header, employees);
+	if (remove) {
+		if (remove_employee(header, &employees, remove) == STATUS_ERROR){
+			printf("Failed to remove employee\n");
+			return -1;
+		}
+	}
 
+	if (hoursstring) {
+		add_hours(header, &employees, hoursstring);
+	}
+
+	if (list) {
+		list_employees(header, employees);
+	}
+	
+
+
+	output_file(dbfd, header, employees);
+	
 	close(dbfd);
 
 	return 0;
