@@ -74,149 +74,156 @@ int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *a
 	char *addr = strtok(NULL, ",");
 	char *hours = strtok(NULL, ",");
 	
-	int i = dbhdr->count - 1;
-	
-
-	strncpy(employees[i].name, name, sizeof(employees[i].name));
-	strncpy(employees[i].address, addr, sizeof(employees[i].address));
-	employees[i].hours = atoi(hours);
-  
-  if (employees[i].name == NULL || employees[i].address == NULL
-  || employees[i].hours == NULL) {
-    printf("Unable to add employee\n");
+  if (name == NULL) {
+    printf("name is null\n");
+    return STATUS_ERROR;
+  }
+  if (addr == NULL) {
+    printf("address is null\n");
+    return STATUS_ERROR;
+  }
+  if (hours == NULL) {
+    printf("hours is null\n");
     return STATUS_ERROR;
   }
 
-	return STATUS_SUCCESS;
+  int i = dbhdr->count - 1;
+
+
+  strncpy(employees[i].name, name, sizeof(employees[i].name));
+  strncpy(employees[i].address, addr, sizeof(employees[i].address));
+  employees[i].hours = atoi(hours);
+
+  return STATUS_SUCCESS;
 }
 
 int read_employees(int fd, struct dbheader_t *dbhdr, struct employee_t **employeesOut) {
-	if (fd < 0) {
-		printf("Got a bad FD from the user\n");
-		return STATUS_ERROR;
-	}
-	
-	int count = dbhdr->count;
+  if (fd < 0) {
+    printf("Got a bad FD from the user\n");
+    return STATUS_ERROR;
+  }
 
-	struct employee_t *employees = calloc(count, sizeof(struct employee_t));
-	if (employees == NULL) {
-		printf("Malloc failed to create employees\n");
-		return STATUS_ERROR;
-	}
+  int count = dbhdr->count;
 
-	read(fd, employees, count*sizeof(struct employee_t));
+  struct employee_t *employees = calloc(count, sizeof(struct employee_t));
+  if (employees == NULL) {
+    printf("Malloc failed to create employees\n");
+    return STATUS_ERROR;
+  }
 
-	int i = 0;
-	for (; i < count; i++) {
-		employees[i].hours = ntohl(employees[i].hours);
-	}
+  read(fd, employees, count*sizeof(struct employee_t));
 
-	*employeesOut = employees;
+  int i = 0;
+  for (; i < count; i++) {
+    employees[i].hours = ntohl(employees[i].hours);
+  }
 
-	return STATUS_SUCCESS;
+  *employeesOut = employees;
+
+  return STATUS_SUCCESS;
 }
 
 int output_file(int fd, struct dbheader_t *dbhdr, struct employee_t *employees) {
-	if (fd < 0) {
-		printf("Got a bad FD from the user\n");
-		return STATUS_ERROR;
-	}
-	
-	int realcount = dbhdr->count;
+  if (fd < 0) {
+    printf("Got a bad FD from the user\n");
+    return STATUS_ERROR;
+  }
 
-	dbhdr->magic = htonl(dbhdr->magic);
-	dbhdr->filesize = htonl(sizeof(struct dbheader_t) + (sizeof(struct employee_t) * realcount));
-	dbhdr->count = htons(dbhdr->count);
-	dbhdr->version = htons(dbhdr->version);
+  int realcount = dbhdr->count;
 
-	lseek(fd, 0, SEEK_SET);
+  dbhdr->magic = htonl(dbhdr->magic);
+  dbhdr->filesize = htonl(sizeof(struct dbheader_t) + (sizeof(struct employee_t) * realcount));
+  dbhdr->count = htons(dbhdr->count);
+  dbhdr->version = htons(dbhdr->version);
 
-	write(fd, dbhdr, sizeof(struct dbheader_t));
-	
-	int i = 0;
-	for (; i < realcount; i++) {
-		employees[i].hours = htonl(employees[i].hours);
-		write(fd, &employees[i], sizeof(struct employee_t));
-	}
+  lseek(fd, 0, SEEK_SET);
 
-	
-	ftruncate(fd, sizeof(struct dbheader_t) + (sizeof(struct employee_t) * realcount));
+  write(fd, dbhdr, sizeof(struct dbheader_t));
 
-	return STATUS_SUCCESS;
+  int i = 0;
+  for (; i < realcount; i++) {
+    employees[i].hours = htonl(employees[i].hours);
+    write(fd, &employees[i], sizeof(struct employee_t));
+  }
+
+
+  ftruncate(fd, sizeof(struct dbheader_t) + (sizeof(struct employee_t) * realcount));
+
+  return STATUS_SUCCESS;
 
 }	
 
 int validate_db_header(int fd, struct dbheader_t **headerOut) {
-	if (fd < 0) {
-		printf("Got a bad FD from the user\n");
-		return STATUS_ERROR;
-	}
+  if (fd < 0) {
+    printf("Got a bad FD from the user\n");
+    return STATUS_ERROR;
+  }
 
-	struct dbheader_t *header = calloc(1, sizeof(struct dbheader_t));
-	if (header == NULL) {
-		printf("Malloc failed to create db header\n");
-		return STATUS_ERROR;
-	}
+  struct dbheader_t *header = calloc(1, sizeof(struct dbheader_t));
+  if (header == NULL) {
+    printf("Malloc failed to create db header\n");
+    return STATUS_ERROR;
+  }
 
-	if (read(fd, header, sizeof(struct dbheader_t)) != sizeof(struct dbheader_t)) {
-		perror("read");
-		free(header);
-		return STATUS_ERROR;
-	}
+  if (read(fd, header, sizeof(struct dbheader_t)) != sizeof(struct dbheader_t)) {
+    perror("read");
+    free(header);
+    return STATUS_ERROR;
+  }
 
 
-	header->magic = ntohl(header->magic);
-	header->version = ntohs(header->version);
-	header->count = ntohs(header->count);
-	header->filesize = ntohl(header->filesize);
+  header->magic = ntohl(header->magic);
+  header->version = ntohs(header->version);
+  header->count = ntohs(header->count);
+  header->filesize = ntohl(header->filesize);
 
-	if (header->magic != HEADER_MAGIC) {
-		printf("Improper header magic\n");
-		return STATUS_ERROR;
-	}
+  if (header->magic != HEADER_MAGIC) {
+    printf("Improper header magic\n");
+    return STATUS_ERROR;
+  }
 
-	if (header->version != 1) {
-		printf("Improper header version\n");
-		return STATUS_ERROR;
-	}
+  if (header->version != 1) {
+    printf("Improper header version\n");
+    return STATUS_ERROR;
+  }
 
-	struct stat dbstat = {0};
-	if (fstat(fd, &dbstat) == -1) {
-		perror("fstat");
-		return STATUS_ERROR;
-	}
-	
-	if (header->filesize != dbstat.st_size) {
-		printf("Corrupted database\n");
-		free(header);
-		return STATUS_ERROR;
-	}
+  struct stat dbstat = {0};
+  if (fstat(fd, &dbstat) == -1) {
+    perror("fstat");
+    return STATUS_ERROR;
+  }
 
-	*headerOut = header;
+  if (header->filesize != dbstat.st_size) {
+    printf("Corrupted database\n");
+    free(header);
+    return STATUS_ERROR;
+  }
+
+  *headerOut = header;
 
   return STATUS_SUCCESS;
 }
 
 int create_db_header(struct dbheader_t **headerOut) {
-	if (headerOut == NULL) {
+  if (headerOut == NULL) {
     printf("Header not created in main\n");
     return STATUS_ERROR;
   }
 
   struct dbheader_t *header = calloc(1, sizeof(struct dbheader_t));
-	if (header == NULL) {
-		printf("Malloc failed to create db header\n");
-		return STATUS_ERROR;
-	}
-	
-	header->version = 0x1;
-	header->count = 0;
-	header->magic = HEADER_MAGIC;
-	header->filesize = sizeof(struct dbheader_t);
+  if (header == NULL) {
+    printf("Malloc failed to create db header\n");
+    return STATUS_ERROR;
+  }
 
-	*headerOut = header;
+  header->version = 0x1;
+  header->count = 0;
+  header->magic = HEADER_MAGIC;
+  header->filesize = sizeof(struct dbheader_t);
 
-	return STATUS_SUCCESS;
+  *headerOut = header;
+
+  return STATUS_SUCCESS;
 }
 
 
