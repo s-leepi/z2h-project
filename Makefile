@@ -22,9 +22,9 @@ clean:
 	rm -f *.db
 
 $(TARGET): $(OBJ)
-	gcc -o $@ $? -g
+	gcc -Wall -Wextra -o $@ $? -g
 
 obj/%.o : src/%.c
-	gcc -c $< -o $@ -Iinclude
+	gcc -Wall -Wextra -c $< -o $@ -Iinclude -g
 
 

@@ -10,122 +10,117 @@
 #include "parse.h"
 
 void print_usage(char *argv[]) {
-	printf("Usage: %s -n -f <database file>\n", argv[0]);
-	printf("\t -n	-  create new database file\n");
-	printf("\t -f	-  (required) path to database file\n");
+  printf("Usage: %s -n -f <database file>\n", argv[0]);
+  printf("\t -n	-  create new database file\n");
+  printf("\t -f	-  (required) path to database file\n");
 }
 
 int main(int argc, char *argv[]) { 
-	
-	char *filepath = NULL;
-	char *addstring = NULL;
-	char *remove = NULL;
-	char *hoursstring = NULL;
 
-	bool newfile = false;
-	bool list = false;
-	
-	int c = 0;
-	int dbfd = -1;
-	
-	struct dbheader_t *header = NULL;
-	struct employee_t *employees = NULL;
+  char *filepath = NULL;
+  char *addstring = NULL;
+  char *remove = NULL;
+  char *hoursstring = NULL;
 
-	while((c = getopt(argc, argv, "nf:a:lr:h:")) != -1) {
-		switch (c) {
-		
-			case 'n':
-				newfile = true;
-				break;
-			case 'f':
-				filepath = optarg;
-				break;
-			case 'a':
-				addstring = optarg;
-				break;
-			case 'l':
-				list = true;
-				break;
-			case 'r':
-				remove = optarg;
-				break;
-			case 'h':
-				hoursstring = optarg;
-				break;
-			case '?':
-				printf("Unknown option -%c\n", c);
-				break;
+  bool newfile = false;
+  bool list = false;
 
-			default: 
-				return -1;
-		}
-	}
+  int c = 0;
+  int dbfd = -1;
 
-	if (filepath == NULL) {
-		printf("File path is a required argument\n");
-		print_usage(argv);
-		
-		return 0;
-	}
+  struct dbheader_t *header = NULL;
+  struct employee_t *employees = NULL;
 
-	if (newfile) {
-		dbfd = create_db_file(filepath);
-		if (dbfd == STATUS_ERROR) {
-			printf("Unable to create database file\n");
-			return -1;
-		}
+  while((c = getopt(argc, argv, "nf:a:lr:h:")) != -1) {
+    switch (c) {
 
-		create_db_header(dbfd, &header);
+      case 'n':
+        newfile = true;
+        break;
+      case 'f':
+        filepath = optarg;
+        break;
+      case 'a':
+        addstring = optarg;
+        break;
+      case 'l':
+        list = true;
+        break;
+      case 'r':
+        remove = optarg;
+        break;
+      case 'h':
+        hoursstring = optarg;
+        break;
+      case '?':
+        printf("Unknown option -%c\n", c);
+        break;
+      default: 
+        return -1;
+    }
+  }
 
-	} else {
+  if (filepath == NULL) {
+    printf("File path is a required argument\n");
+    print_usage(argv);
 
-		dbfd = open_db_file(filepath);
-		if (dbfd == STATUS_ERROR) {
-			printf("Unable to open database file\n");
-			return -1;
-		}
+    return 0;
+  }
 
-		if (validate_db_header(dbfd, &header) == STATUS_ERROR){
-			printf("Failed to validate database header\n");
-			return -1;
-		}
-	}
+  if (newfile) {
+    dbfd = create_db_file(filepath);
+    if (dbfd == STATUS_ERROR) {
+      printf("Unable to create database file\n");
+      return -1;
+    }
 
-	if (read_employees(dbfd, header, &employees) == STATUS_ERROR) {
-		printf("Failed to read employees\n");
-		return -1;
+    create_db_header(&header);
 
-	}
-	
-	
-	if (addstring) {
-		header->count++;
-		employees = realloc(employees, header->count*(sizeof(struct employee_t)));
-		int i = header->count - 1;
-		memset(&employees[i], 0, sizeof(struct employee_t)); 
-		add_employee(header, employees, addstring);
-	}
+  } else {
 
-	if (remove) {
-		if (remove_employee(header, &employees, remove) == STATUS_ERROR){
-			printf("Failed to remove employee\n");
-			return -1;
-		}
-	}
+    dbfd = open_db_file(filepath);
+    if (dbfd == STATUS_ERROR) {
+      printf("Unable to open database file\n");
+      return -1;
+    }
 
-	if (hoursstring) {
-		add_hours(header, &employees, hoursstring);
-	}
+    if (validate_db_header(dbfd, &header) == STATUS_ERROR){
+      printf("Failed to validate database header\n");
+      return -1;
+    }
+  }
 
-	if (list) {
-		list_employees(header, employees);
-	}
-	
+  if (read_employees(dbfd, header, &employees) == STATUS_ERROR) {
+    printf("Failed to read employees\n");
+    return -1;
 
+  }
 
-	output_file(dbfd, header, employees);
-	
-	close(dbfd);
+  if (addstring) {
+    header->count++;
+    employees = realloc(employees, header->count*(sizeof(struct employee_t)));
+    add_employee(header, employees, addstring);
+  }
 
-	return 0;
+  if (remove) {
+    if (remove_employee(header, &employees, remove) == STATUS_ERROR){
+      printf("Failed to remove employee\n");
+      return -1;
+    }
+  }
+
+  if (hoursstring) {
+    add_hours(header, &employees, hoursstring);
+  }
+
+  if (list) {
+    list_employees(header, employees);
+  }
+
+  output_file(dbfd, header, employees);
+
+  close(dbfd);
+  free(employees);
+  free(header);
+  return 0;
 }
