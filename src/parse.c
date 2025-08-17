@@ -65,6 +65,13 @@ void list_employees(struct dbheader_t *dbhdr, struct employee_t *employees) {
 }
 
 int add_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *addstring) {
+ 
+  if (dbhdr == NULL || employees == NULL || addstring == NULL) {
+    printf("Argument is NULL\n");
+    return STATUS_ERROR;
+  }
+
+
   struct employee_t *e = realloc(*employees, (dbhdr->count + 1) * sizeof(struct employee_t));
 
   if (e == NULL) {
@@ -72,11 +79,6 @@ int add_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *
     return STATUS_ERROR;
   }
   
-  if (dbhdr == NULL || employees == NULL || addstring == NULL) {
-    printf("Argument is NULL\n");
-    return STATUS_ERROR;
-  }
-
 	char *name = strtok(addstring, ",");
 	char *addr = strtok(NULL, ",");
 	char *hours = strtok(NULL, ",");
