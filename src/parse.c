@@ -90,8 +90,8 @@ int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *a
   int i = dbhdr->count - 1;
 
 
-  strncpy(employees[i].name, name, sizeof(employees[i].name));
-  strncpy(employees[i].address, addr, sizeof(employees[i].address));
+  strncpy(employees[i].name, name, sizeof(employees[i].name - 1));
+  strncpy(employees[i].address, addr, sizeof(employees[i].address - 1));
   employees[i].hours = atoi(hours);
 
   if (&employees[i] == NULL) {
