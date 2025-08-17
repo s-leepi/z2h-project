@@ -65,7 +65,7 @@ void list_employees(struct dbheader_t *dbhdr, struct employee_t *employees) {
 }
 
 int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *addstring) {
-  if (*dbhdr == NULL || *employees == NULL || *addstring == NULL) {
+  if (dbhdr == NULL || employees == NULL || addstring == NULL) {
     printf("Argument is NULL\n");
     return STATUS_ERROR;
   }
@@ -93,6 +93,11 @@ int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *a
   strncpy(employees[i].name, name, sizeof(employees[i].name));
   strncpy(employees[i].address, addr, sizeof(employees[i].address));
   employees[i].hours = atoi(hours);
+
+  if (employees[i] == NULL) {
+    printf("Unable to add employee\n");
+    return STATUS_ERROR;
+  }
 
   return STATUS_SUCCESS;
 }
