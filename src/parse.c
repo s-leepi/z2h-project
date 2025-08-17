@@ -97,9 +97,9 @@ int add_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *
   int i = dbhdr->count;
 
 
-  strncpy(e[i].name, name, sizeof(e[i].name - 1));
+  strncpy(e[i].name, name, sizeof(e[i].name) - 1);
   e[i].name[sizeof(e[i].name) - 1] = '\0';
-  strncpy(e[i].address, addr, sizeof(e[i].address - 1));
+  strncpy(e[i].address, addr, sizeof(e[i].address) - 1);
   e[i].address[sizeof(e[i].address) - 1] = '\0';
   e[i].hours = atoi(hours);
   
