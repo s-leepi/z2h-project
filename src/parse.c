@@ -94,7 +94,7 @@ int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *a
   strncpy(employees[i].address, addr, sizeof(employees[i].address));
   employees[i].hours = atoi(hours);
 
-  if (employees[i] == NULL) {
+  if (&employees[i] == NULL) {
     printf("Unable to add employee\n");
     return STATUS_ERROR;
   }
