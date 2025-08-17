@@ -104,6 +104,7 @@ int add_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *
   e[i].hours = atoi(hours);
   
   *employees = e;
+  dbhdr->count++;
 
   return STATUS_SUCCESS;
 }
