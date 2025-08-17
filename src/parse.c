@@ -64,7 +64,14 @@ void list_employees(struct dbheader_t *dbhdr, struct employee_t *employees) {
 	}
 }
 
-int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *addstring) {
+int add_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *addstring) {
+  struct employee_t *e = realloc(employees, (dbhdr->count + 1) * sizeof(struct employee_t));
+
+  if (e == NULL) {
+    printf("Add employee realloc failed\n");
+    return STATUS_ERROR;
+  }
+  
   if (dbhdr == NULL || employees == NULL || addstring == NULL) {
     printf("Argument is NULL\n");
     return STATUS_ERROR;
@@ -87,7 +94,7 @@ int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *a
     return STATUS_ERROR;
   }
 
-  int i = dbhdr->count - 1;
+  int i = dbhdr->count;
 
 
   strncpy(employees[i].name, name, sizeof(employees[i].name - 1));
@@ -96,6 +103,7 @@ int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *a
   employees[i].address[sizeof(employees[i].address) - 1] = '\0';
   employees[i].hours = atoi(hours);
   
+  *employeesOut = e;
 
   return STATUS_SUCCESS;
 }
